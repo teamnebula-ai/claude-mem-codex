@@ -1,0 +1,70 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$PLUGIN_ROOT/scripts/claude-mem-hook.sh\" context",
+            "timeout": 60,
+            "statusMessage": "Loading Codex memory"
+          },
+          {
+            "type": "command",
+            "command": "\"$PLUGIN_ROOT/scripts/claude-mem-cross-context.sh\" claude-code",
+            "timeout": 60,
+            "statusMessage": "Loading Claude Code memory"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$PLUGIN_ROOT/scripts/claude-mem-hook.sh\" session-init",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$|^mcp__.+__(read|view|cat)(_file|_files)?$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$PLUGIN_ROOT/scripts/claude-mem-hook.sh\" file-context",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$PLUGIN_ROOT/scripts/claude-mem-hook.sh\" observation",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$PLUGIN_ROOT/scripts/claude-mem-hook.sh\" summarize",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
+

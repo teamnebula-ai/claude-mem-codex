@@ -1,0 +1,37 @@
+{
+  "name": "claude-mem-codex",
+  "version": "0.1.1",
+  "description": "Share an existing claude-mem knowledge base between Claude Code and Codex.",
+  "author": {
+    "name": "Team Nebula",
+    "url": "https://github.com/teamnebula-ai"
+  },
+  "homepage": "https://github.com/teamnebula-ai/claude-mem-codex#readme",
+  "repository": "https://github.com/teamnebula-ai/claude-mem-codex",
+  "license": "MIT",
+  "keywords": [
+    "claude-mem",
+    "codex",
+    "claude-code",
+    "memory",
+    "mcp"
+  ],
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Claude Mem for Codex",
+    "shortDescription": "Shared memory for Claude Code and Codex.",
+    "longDescription": "Connects Codex lifecycle hooks and memory search to an existing claude-mem installation, with optional cross-recall in both CLIs.",
+    "developerName": "Team Nebula",
+    "category": "Productivity",
+    "capabilities": [
+      "Memory",
+      "Search"
+    ],
+    "websiteURL": "https://github.com/teamnebula-ai/claude-mem-codex",
+    "defaultPrompt": [
+      "Search memory for relevant prior work.",
+      "Summarize what we previously decided about this project."
+    ],
+    "brandColor": "#4F7CFF"
+  }
+}
