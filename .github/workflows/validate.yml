@@ -1,0 +1,29 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate JSON
+        run: |
+          python -m json.tool .agents/plugins/marketplace.json >/dev/null
+          python -m json.tool plugins/claude-mem-codex/.codex-plugin/plugin.json >/dev/null
+          python -m json.tool plugins/claude-mem-codex/.mcp.json >/dev/null
+          python -m json.tool plugins/claude-mem-codex/hooks/hooks.json >/dev/null
+      - name: Check shell scripts
+        run: sh -n plugins/claude-mem-codex/scripts/*.sh
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+

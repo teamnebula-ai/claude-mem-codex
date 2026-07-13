@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mcp-search": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "-e",
+        "const f=require('fs'),p=require('path'),o=require('os'),c=require('child_process');const h=o.homedir(),roots=[process.env.CLAUDE_MEM_PLUGIN_ROOT,p.join(h,'.claude/plugins/cache/thedotmack/claude-mem'),p.join(h,'.codex/plugins/cache/thedotmack/claude-mem'),p.join(h,'.claude/plugins/marketplaces/thedotmack/plugin')].filter(Boolean);let found='';for(const root of roots){let choices=[root];try{choices=choices.concat(f.readdirSync(root).filter(x=>/^\\d/.test(x)).map(x=>p.join(root,x)).sort((a,b)=>f.statSync(b).mtimeMs-f.statSync(a).mtimeMs))}catch{}for(const q of choices){if(f.existsSync(p.join(q,'scripts','mcp-server.cjs'))){found=q;break}}if(found)break}if(!found){console.error('claude-mem installation not found');process.exit(1)}const child=c.spawn(process.execPath,[p.join(found,'scripts','mcp-server.cjs')],{stdio:'inherit'});child.on('exit',code=>process.exit(code??0));"
+      ]
+    }
+  }
+}
