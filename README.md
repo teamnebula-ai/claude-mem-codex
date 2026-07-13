@@ -43,7 +43,8 @@ The installer:
 1. copies a stable hook into `~/.claude/hooks/`;
 2. backs up an existing `~/.claude/settings.json` once;
 3. appends one `SessionStart` hook without replacing other hooks;
-4. remains safe to run repeatedly.
+4. migrates an older direct-path cross-recall hook without duplication;
+5. remains safe to run repeatedly.
 
 Remove only this integration with:
 
@@ -80,4 +81,3 @@ python3 -m unittest discover -s tests -v
 ```
 
 This project is an independent integration and is not affiliated with or endorsed by the claude-mem maintainers, Anthropic, or OpenAI.
-

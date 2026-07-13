@@ -20,9 +20,13 @@ class InstallerTest(unittest.TestCase):
             settings = home / ".claude/settings.json"
             settings.parent.mkdir(parents=True)
             settings.write_text(json.dumps({
-                "hooks": {"SessionStart": [{"hooks": [{
-                    "type": "command", "command": "existing-hook"
-                }]}]}
+                "hooks": {"SessionStart": [
+                    {"hooks": [{"type": "command", "command": "existing-hook"}]},
+                    {"hooks": [{
+                        "type": "command",
+                        "command": "/old/plugin/claude-mem-cross-context.sh codex",
+                    }]},
+                ]}
             }))
 
             source = ROOT / "plugins/claude-mem-codex/scripts/claude-mem-cross-context.sh"
@@ -35,6 +39,7 @@ class InstallerTest(unittest.TestCase):
                 for hook in group["hooks"]
             ]
             self.assertEqual(commands.count("existing-hook"), 1)
+            self.assertNotIn("/old/plugin/claude-mem-cross-context.sh codex", commands)
             self.assertEqual(sum(installer.HOOK_NAME in c for c in commands), 1)
 
             installer.uninstall(home)
@@ -49,4 +54,3 @@ class InstallerTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

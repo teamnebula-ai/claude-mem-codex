@@ -33,6 +33,16 @@ def install(home: Path, source: Path) -> tuple[Path, Path]:
 
     command = f'"{hook_path}" codex'
     groups = settings.setdefault("hooks", {}).setdefault("SessionStart", [])
+    for group in groups:
+        group["hooks"] = [
+            hook for hook in group.get("hooks", [])
+            if not (
+                "claude-mem-cross-context.sh" in str(hook.get("command", ""))
+                and str(hook.get("command", "")).strip().endswith(" codex")
+                and hook.get("command") != command
+            )
+        ]
+    groups[:] = [group for group in groups if group.get("hooks")]
     present = any(
         command == hook.get("command")
         for group in groups
@@ -89,4 +99,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
