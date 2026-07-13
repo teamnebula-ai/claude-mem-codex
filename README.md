@@ -11,6 +11,7 @@ This Team Nebula plugin connects Codex lifecycle hooks and MCP memory search to 
 - Loads both Codex and Claude Code context when a Codex session starts.
 - Optionally adds the reciprocal Claude Code hook so Claude sessions load Codex context.
 - Dynamically follows installed claude-mem versions instead of pinning a cache path.
+- Resolves Node.js outside the interactive shell `PATH` used by lifecycle hooks.
 - Keeps one database; it does not copy, migrate, or rewrite memory records.
 
 ## Requirements
