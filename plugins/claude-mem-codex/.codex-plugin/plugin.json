@@ -1,6 +1,6 @@
 {
   "name": "claude-mem-codex",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Share an existing claude-mem knowledge base between Claude Code and Codex.",
   "author": {
     "name": "Team Nebula",
@@ -35,4 +35,3 @@
     "brandColor": "#4F7CFF"
   }
 }
-
