@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -50,6 +52,53 @@ class InstallerTest(unittest.TestCase):
                 for hook in group["hooks"]
             ]
             self.assertEqual(commands, ["existing-hook"])
+
+    def test_hook_wrappers_use_explicit_node_when_path_is_minimal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            claude_mem = root / "claude-mem"
+            scripts = claude_mem / "scripts"
+            scripts.mkdir(parents=True)
+            (scripts / "worker-service.cjs").write_text("// fixture\n")
+            (scripts / "bun-runner.js").write_text("// fixture\n")
+
+            args_file = root / "args.txt"
+            stdin_file = root / "stdin.json"
+            node = root / "node"
+            node.write_text(
+                "#!/bin/sh\n"
+                "printf '%s\\n' \"$*\" > \"$FAKE_NODE_ARGS\"\n"
+                "cat > \"$FAKE_NODE_STDIN\"\n"
+                "printf '%s\\n' '{\"continue\":true}'\n"
+            )
+            node.chmod(0o755)
+
+            env = {
+                "HOME": str(root),
+                "PATH": "/usr/bin:/bin",
+                "CLAUDE_MEM_PLUGIN_ROOT": str(claude_mem),
+                "CLAUDE_MEM_NODE": str(node),
+                "FAKE_NODE_ARGS": str(args_file),
+                "FAKE_NODE_STDIN": str(stdin_file),
+            }
+            payload = '{"hook_event_name":"UserPromptSubmit"}'
+            wrappers = [
+                ("claude-mem-hook.sh", ["session-init"], "hook codex session-init"),
+                ("claude-mem-cross-context.sh", ["claude-code"], "hook claude-code context"),
+            ]
+            for script_name, arguments, expected_tail in wrappers:
+                completed = subprocess.run(
+                    [str(ROOT / "plugins/claude-mem-codex/scripts" / script_name), *arguments],
+                    input=payload,
+                    text=True,
+                    capture_output=True,
+                    env=env,
+                    check=False,
+                )
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+                self.assertEqual(json.loads(completed.stdout), {"continue": True})
+                self.assertTrue(args_file.read_text().strip().endswith(expected_tail))
+                self.assertEqual(stdin_file.read_text(), payload)
 
 
 if __name__ == "__main__":
