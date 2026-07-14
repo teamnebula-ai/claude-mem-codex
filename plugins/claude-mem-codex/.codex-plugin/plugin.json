@@ -1,6 +1,6 @@
 {
   "name": "claude-mem-codex",
-  "version": "0.1.2",
+  "version": "0.1.2+codex.20260714103600",
   "description": "Share an existing claude-mem knowledge base between Claude Code and Codex.",
   "author": {
     "name": "Team Nebula",
