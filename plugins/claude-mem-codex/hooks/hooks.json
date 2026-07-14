@@ -59,12 +59,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$PLUGIN_ROOT/scripts/claude-mem-hook.sh\" summarize",
-            "timeout": 60
+            "command": "\"$PLUGIN_ROOT/scripts/claude-mem-stop.sh\"",
+            "timeout": 180,
+            "statusMessage": "Saving shared Claude/Codex context"
           }
         ]
       }
     ]
   }
 }
-

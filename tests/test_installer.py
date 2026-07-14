@@ -100,6 +100,30 @@ class InstallerTest(unittest.TestCase):
                 self.assertTrue(args_file.read_text().strip().endswith(expected_tail))
                 self.assertEqual(stdin_file.read_text(), payload)
 
+    def test_stop_hook_sequences_summary_before_optional_hyperswarm(self):
+        hooks = json.loads(
+            (ROOT / "plugins/claude-mem-codex/hooks/hooks.json").read_text()
+        )
+        stop_commands = [
+            hook["command"]
+            for group in hooks["hooks"]["Stop"]
+            for hook in group["hooks"]
+        ]
+        self.assertEqual(
+            stop_commands,
+            ['"$PLUGIN_ROOT/scripts/claude-mem-stop.sh"'],
+        )
+
+        script = (
+            ROOT / "plugins/claude-mem-codex/scripts/claude-mem-stop.sh"
+        ).read_text()
+        summary_pos = script.index('claude-mem-hook.sh" summarize')
+        capture_pos = script.index("capture --runtime claude_mem_session")
+        push_pos = script.index('"$hs" push')
+        self.assertLess(summary_pos, capture_pos)
+        self.assertLess(capture_pos, push_pos)
+        self.assertIn('CODEX_NO_INTERACTIVE:-', script)
+
 
 if __name__ == "__main__":
     unittest.main()

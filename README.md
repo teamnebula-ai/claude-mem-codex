@@ -67,6 +67,12 @@ SessionStart in either CLI loads its native source plus the other source.
 
 Claude-mem generates distilled observations asynchronously. Prompt capture is immediate; newly distilled summaries appear after the worker processes its queue.
 
+If HyperSwarm is installed, the Codex `Stop` adapter runs the two layers in a
+strict sequence: claude-mem summarizes the turn first, then HyperSwarm reads
+that session summary, applies its significance gate, and pushes any qualifying
+entry through the configured sync. HyperSwarm remains optional; its absence or
+an unavailable sync target never prevents claude-mem from saving context.
+
 ## Security and privacy
 
 All memory remains in the user's existing local claude-mem store. The plugin does not add telemetry or a remote service. Hooks run outside the Codex sandbox after explicit user trust, so review the scripts before enabling them.
