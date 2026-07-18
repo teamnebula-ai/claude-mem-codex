@@ -100,6 +100,62 @@ class InstallerTest(unittest.TestCase):
                 self.assertTrue(args_file.read_text().strip().endswith(expected_tail))
                 self.assertEqual(stdin_file.read_text(), payload)
 
+    def test_hook_wrappers_fail_open_on_empty_input_or_runner_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            claude_mem = root / "claude-mem"
+            scripts = claude_mem / "scripts"
+            scripts.mkdir(parents=True)
+            (scripts / "worker-service.cjs").write_text("// fixture\n")
+            (scripts / "bun-runner.js").write_text("// fixture\n")
+
+            calls = root / "calls.txt"
+            node = root / "node"
+            node.write_text(
+                "#!/bin/sh\n"
+                "printf 'called\\n' >> \"$FAKE_NODE_CALLS\"\n"
+                "printf '%s' '{partial-json'\n"
+                "exit 7\n"
+            )
+            node.chmod(0o755)
+            env = {
+                "HOME": str(root),
+                "PATH": "/usr/bin:/bin",
+                "CLAUDE_MEM_PLUGIN_ROOT": str(claude_mem),
+                "CLAUDE_MEM_NODE": str(node),
+                "FAKE_NODE_CALLS": str(calls),
+            }
+            wrappers = [
+                ("claude-mem-hook.sh", ["context"]),
+                ("claude-mem-cross-context.sh", ["claude-code"]),
+            ]
+            for script_name, arguments in wrappers:
+                script = ROOT / "plugins/claude-mem-codex/scripts" / script_name
+                empty = subprocess.run(
+                    [str(script), *arguments],
+                    input="",
+                    text=True,
+                    capture_output=True,
+                    env=env,
+                    check=False,
+                )
+                self.assertEqual(empty.returncode, 0, empty.stderr)
+                self.assertEqual(empty.stdout, "")
+                self.assertFalse(calls.exists())
+
+                failed = subprocess.run(
+                    [str(script), *arguments],
+                    input='{"hook_event_name":"SessionStart"}',
+                    text=True,
+                    capture_output=True,
+                    env=env,
+                    check=False,
+                )
+                self.assertEqual(failed.returncode, 0, failed.stderr)
+                self.assertEqual(failed.stdout, "")
+                self.assertTrue(calls.exists())
+                calls.unlink()
+
     def test_stop_hook_sequences_summary_before_optional_hyperswarm(self):
         hooks = json.loads(
             (ROOT / "plugins/claude-mem-codex/hooks/hooks.json").read_text()
@@ -123,6 +179,7 @@ class InstallerTest(unittest.TestCase):
         self.assertLess(summary_pos, capture_pos)
         self.assertLess(capture_pos, push_pos)
         self.assertIn('CODEX_NO_INTERACTIVE:-', script)
+        self.assertIn("&\n", script)
 
 
 if __name__ == "__main__":

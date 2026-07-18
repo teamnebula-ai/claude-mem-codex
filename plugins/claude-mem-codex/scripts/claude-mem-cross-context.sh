@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -u
 
 platform=${1:?usage: claude-mem-cross-context.sh PLATFORM}
 case "$platform" in
@@ -61,17 +61,31 @@ find_node() {
 
 root=$(find_claude_mem || true)
 if [ -z "$root" ]; then
-  echo "claude-mem: installation not found; install thedotmack/claude-mem first" >&2
-  exit 1
+  exit 0
 fi
 
 node_bin=$(find_node || true)
 if [ -z "$node_bin" ]; then
-  echo "claude-mem: Node.js not found; set CLAUDE_MEM_NODE to an executable path" >&2
-  exit 1
+  exit 0
 fi
+
+# Fail open for the same reason as claude-mem-hook.sh: memory recall must never
+# make a Codex SessionStart fail when stdin is empty or upstream is unavailable.
+payload=$(mktemp "${TMPDIR:-/tmp}/claude-mem-codex-cross-input.XXXXXX") || exit 0
+output=$(mktemp "${TMPDIR:-/tmp}/claude-mem-codex-cross-output.XXXXXX") || {
+  rm -f "$payload"
+  exit 0
+}
+trap 'rm -f "$payload" "$output"' EXIT HUP INT TERM
+cat >"$payload" 2>/dev/null || exit 0
+[ -s "$payload" ] || exit 0
 
 # Running the opposite adapter selects the other platform_source. Each CLI's
 # native hook still loads its own source, producing symmetric cross-recall.
 export CLAUDE_MEM_CODEX_HOOK=1
-exec "$node_bin" "$root/scripts/bun-runner.js" "$root/scripts/worker-service.cjs" hook "$platform" context
+if "$node_bin" "$root/scripts/bun-runner.js" \
+    "$root/scripts/worker-service.cjs" hook "$platform" context \
+    <"$payload" >"$output" 2>/dev/null; then
+  cat "$output"
+fi
+exit 0

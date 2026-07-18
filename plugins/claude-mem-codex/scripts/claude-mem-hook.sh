@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -u
 
 event=${1:?usage: claude-mem-hook.sh EVENT}
 
@@ -57,15 +57,30 @@ find_node() {
 
 root=$(find_claude_mem || true)
 if [ -z "$root" ]; then
-  echo "claude-mem: installation not found; install thedotmack/claude-mem first" >&2
-  exit 1
+  exit 0
 fi
 
 node_bin=$(find_node || true)
 if [ -z "$node_bin" ]; then
-  echo "claude-mem: Node.js not found; set CLAUDE_MEM_NODE to an executable path" >&2
-  exit 1
+  exit 0
 fi
 
+# Hooks are optional context infrastructure. Buffer stdin and stdout so an empty
+# Codex payload, runner crash, or partial JSON response can never fail or corrupt
+# the lifecycle event that invoked this adapter.
+payload=$(mktemp "${TMPDIR:-/tmp}/claude-mem-codex-input.XXXXXX") || exit 0
+output=$(mktemp "${TMPDIR:-/tmp}/claude-mem-codex-output.XXXXXX") || {
+  rm -f "$payload"
+  exit 0
+}
+trap 'rm -f "$payload" "$output"' EXIT HUP INT TERM
+cat >"$payload" 2>/dev/null || exit 0
+[ -s "$payload" ] || exit 0
+
 export CLAUDE_MEM_CODEX_HOOK=1
-exec "$node_bin" "$root/scripts/bun-runner.js" "$root/scripts/worker-service.cjs" hook codex "$event"
+if "$node_bin" "$root/scripts/bun-runner.js" \
+    "$root/scripts/worker-service.cjs" hook codex "$event" \
+    <"$payload" >"$output" 2>/dev/null; then
+  cat "$output"
+fi
+exit 0
