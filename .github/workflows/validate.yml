@@ -2,6 +2,9 @@ name: Validate
 
 on:
   pull_request:
+    # ready_for_review is listed so a draft gets its checks the moment it is
+    # marked ready; the default types alone would wait for the next push.
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
@@ -10,6 +13,9 @@ permissions:
 
 jobs:
   validate:
+    # Draft PRs skip every job that carries this condition. A skipped job
+    # still counts as passing, and marking the PR ready runs it.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
