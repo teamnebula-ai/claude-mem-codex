@@ -1,0 +1,5 @@
+published.json
+publisher.json
+sync-health.json
+*.db
+*.db-*

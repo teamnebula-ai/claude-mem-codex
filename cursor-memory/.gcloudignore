@@ -1,0 +1,7 @@
+.gcloudignore
+*
+!gateway.py
+!cloud_snapshot.py
+!published.json
+!requirements.txt
+!Dockerfile
